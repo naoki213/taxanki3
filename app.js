@@ -744,10 +744,27 @@
 
         if (Array.isArray(data.problems)) {
           const map = new Map(problems.map((p) => [p.id, p]));
-          data.problems.forEach((p) => {
-            normalizeProblem(p);
-            map.set(p.id, p);
-          });
+          data.problems.forEach((np) => {
+  normalizeProblem(np);
+  const old = map.get(np.id);
+
+  if (old) {
+    // スコア関連は既存を優先
+    np.score = old.score;
+    np.answerCount = old.answerCount;
+    np.correctCount = old.correctCount;
+    np.updatedAt = Date.now(); // 更新日時だけ新しく
+
+    // カテゴリは統合して重複除去
+    np.categories = Array.from(new Set([
+      ...(old.categories || []),
+      ...(np.categories || []),
+    ]));
+  }
+
+  map.set(np.id, np);
+});
+
           problems = Array.from(map.values()).map(normalizeProblem);
         }
         if (data.dailyStats && typeof data.dailyStats === 'object') {
